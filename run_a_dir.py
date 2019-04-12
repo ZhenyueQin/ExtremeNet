@@ -143,7 +143,12 @@ if __name__ == "__main__":
     else:
         image_names = [args.demo]
 
-
+    """
+    rtn_dict: 
+    key: img path
+    value: [(position, class, score)]
+    """
+    rtn_dict = {}
 
     for image_id, image_name in enumerate(image_names):
         print('Running ', image_name)
@@ -244,52 +249,60 @@ if __name__ == "__main__":
                             top_bboxes[image_id][j][k, 4] /= 2
 
 
-        if 1: # visualize
-            color_list    = colormap(rgb=True)
-            mask_color_id = 0
-            image         = cv2.imread(image_name)
-            input_image   = image.copy()
-            mask_image    = image.copy()
-            bboxes = {}
-            for j in range(1, categories + 1):
-                keep_inds = (top_bboxes[image_id][j][:, 4] > 0.5)
-                cat_name  = class_name[j]
-                for bbox in top_bboxes[image_id][j][keep_inds]:
-                    sc    = bbox[4]
-                    ex    = bbox[5:13].astype(np.int32).reshape(4, 2)
-                    bbox  = bbox[0:4].astype(np.int32)
-                    txt   = '{}{:.2f}'.format(cat_name, sc)
-                    color_mask = color_list[mask_color_id % len(color_list), :3]
-                    mask_color_id += 1
+        color_list    = colormap(rgb=True)
+        mask_color_id = 0
+        image         = cv2.imread(image_name)
+        input_image   = image.copy()
+        mask_image    = image.copy()
+        bboxes = {}
+        for j in range(1, categories + 1):
+            keep_inds = (top_bboxes[image_id][j][:, 4] > 0.5)
+            cat_name  = class_name[j]
+            for bbox in top_bboxes[image_id][j][keep_inds]:
+                sc    = bbox[4]
+                ex    = bbox[5:13].astype(np.int32).reshape(4, 2)
+                bbox  = bbox[0:4].astype(np.int32)
+                txt   = '{}{:.2f}'.format(cat_name, sc)
+                color_mask = color_list[mask_color_id % len(color_list), :3]
+                mask_color_id += 1
 
-                    print('bbox: ', bbox)
-                    print('cat name: ', cat_name)
+                print('bbox: ', bbox)
+                print('cat name: ', cat_name)
+                print('sc: ', sc)
 
-            #         image = vis_bbox(image,
-            #                          (bbox[0], bbox[1],
-            #                           bbox[2] - bbox[0], bbox[3] - bbox[1]))
-            #         image = vis_class(image,
-            #                           (bbox[0], bbox[1] - 2), txt)
-            #         image = vis_octagon(
-            #             image, ex, color_mask)
-            #         image = vis_ex(image, ex, color_mask)
-            #
-            #
-            #         if args.show_mask:
-            #             mask = dextr.segment(input_image[:, :, ::-1], ex) # BGR to RGB
-            #             mask = np.asfortranarray(mask.astype(np.uint8))
-            #             mask_image = vis_bbox(mask_image,
-            #                                  (bbox[0], bbox[1],
-            #                                   bbox[2] - bbox[0],
-            #                                   bbox[3] - bbox[1]))
-            #             mask_image = vis_class(mask_image,
-            #                                    (bbox[0], bbox[1] - 2), txt)
-            #             mask_image = vis_mask(mask_image, mask, color_mask)
-            #
-            # if args.show_mask:
-            #     cv2.imshow('mask', mask_image)
-            # cv2.imshow('out', image)
-            # cv2.waitKey()
 
+                if image_name not in rtn_dict:
+                    rtn_dict[image_name] = [((bbox[0], bbox[1], bbox[2], bbox[3]), cat_name, sc)]
+                else:
+                    rtn_dict[image_name].append(((bbox[0], bbox[1], bbox[2], bbox[3]), cat_name, sc))
+
+        #         image = vis_bbox(image,
+        #                          (bbox[0], bbox[1],
+        #                           bbox[2] - bbox[0], bbox[3] - bbox[1]))
+        #         image = vis_class(image,
+        #                           (bbox[0], bbox[1] - 2), txt)
+        #         image = vis_octagon(
+        #             image, ex, color_mask)
+        #         image = vis_ex(image, ex, color_mask)
+        #
+        #
+        #         if args.show_mask:
+        #             mask = dextr.segment(input_image[:, :, ::-1], ex) # BGR to RGB
+        #             mask = np.asfortranarray(mask.astype(np.uint8))
+        #             mask_image = vis_bbox(mask_image,
+        #                                  (bbox[0], bbox[1],
+        #                                   bbox[2] - bbox[0],
+        #                                   bbox[3] - bbox[1]))
+        #             mask_image = vis_class(mask_image,
+        #                                    (bbox[0], bbox[1] - 2), txt)
+        #             mask_image = vis_mask(mask_image, mask, color_mask)
+        #
+        # if args.show_mask:
+        #     cv2.imshow('mask', mask_image)
+        # cv2.imshow('out', image)
+        # cv2.waitKey()
+
+    for key, value in rtn_dict.items():
+        print(key, value)
 
 
